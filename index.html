@@ -12,6 +12,15 @@
         <label for='file-input'>Choose file to upload (max 5MB):</label>
         <input name='file-input' multiple='false' type='file'>
       </div>
+      <div>
+        <label for='category-select'>Choose a category:</label>
+        <select name='categories' id='category-select' required>
+          <option value=''>--Please choose a category--</option>
+          <option value='systemA'>systemA</option>
+          <option value='systemB'>systemB</option>
+          <option value='systemC'>systemC</option>
+        </select>
+      </div>
       <div class='file-validation-message'>
         <p>No files currently selected for upload</p>
       </div>
@@ -24,10 +33,10 @@
   <script>
     var apiBaseUrl = 'https://vq1ptznzf8.execute-api.us-east-1.amazonaws.com/dev';
     var button = document.querySelector('button');
-    var fileReader = new FileReader();
     var fileValidationMessage = document.querySelector('.file-validation-message');
     var form = document.querySelector('form');
     var input = document.querySelector('input');
+    var select = document.querySelector('select');
 
     function checkFile() {
       if (input.files[0].size > 5000000) {
@@ -59,6 +68,7 @@
         return response.json();
       })
       .then(function(json) {
+        var fileReader = new FileReader();
         fileReader.addEventListener('loadend', function() {
           fetch(json.uploadURL, {
             method: 'PUT',
@@ -68,12 +78,39 @@
             if (!response.ok) {
               return document.getElementById('progress-message').innerHTML = '<p>Error uploading file</p>';
             }
-
-            document.getElementById('progress-message').innerHTML = '<p>File successfully uploaded!</p>';
           });
         });
 
         fileReader.readAsArrayBuffer(file);
+      })
+      .then(function() {
+        var name = `${file.name.substr(0, file.name.lastIndexOf('.'))}.json`;
+        fetch(`${apiBaseUrl}/requestUploadURL`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: name,
+            type: 'application/json'
+          })
+        })
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (json) {
+          fetch(json.uploadURL, {
+            method: 'PUT',
+            body: new Blob([JSON.stringify({ 'category': select.value })], { type: 'application/json' })
+          })
+          .then(function (response) {
+            if (!response.ok) {
+              return document.getElementById('progress-message').innerHTML = '<p>Error uploading json file</p>';
+            }
+
+            document.getElementById('progress-message').innerHTML = '<p>File successfully uploaded!</p>';
+          });
+        });
       });
     };
   </script>
