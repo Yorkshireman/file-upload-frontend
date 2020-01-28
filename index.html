@@ -54,10 +54,20 @@
     termsCheckbox.addEventListener('change', validateFormSelections);
     form.onsubmit = handleSubmit;
 
+    function displayProgressMessage(text, type) {
+      return document.getElementById('progress-message').innerHTML = `
+        <p class='alert alert-${type}'>${text}</p>
+      `;
+    }
+
     function validateFormSelections() {
+      document.getElementById('progress-message').innerHTML = '';
       if (input.files[0] && input.files[0].size > 5000000) {
-        return fileValidationMessage.innerHTML =
-          `<p class='alert alert-danger'>File size of ${input.files[0].size} bytes exceeds 5MB limit</p>`;
+        return fileValidationMessage.innerHTML = `
+          <p class='alert alert-danger'>
+            File size of ${input.files[0].size} bytes exceeds 5MB limit
+          </p>
+        `;
       }
 
       fileValidationMessage.innerHTML = '';
@@ -66,33 +76,40 @@
         : button.setAttribute('disabled', true);
     }
 
+    function requestUploadURL(name, type) {
+      return fetch(`${apiBaseUrl}/requestUploadURL`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type })
+      });
+    }
+
+    function uploadFile(uploadURL, body) {
+      return fetch(uploadURL, { method: 'PUT', body });
+    }
+
     function handleSubmit(e) {
       e.preventDefault();
       var file = input.files[0];
-      document.getElementById('progress-message').innerHTML = "<p class='alert alert-info'>Uploading...</p>";
-      fetch(`${apiBaseUrl}/requestUploadURL`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: file.name,
-          type: file.type
-        })
-      })
+
+      displayProgressMessage('Uploading...', 'info');
+
+      requestUploadURL(file.name, file.type)
       .then(function(response) {
+        if (!response.ok) {
+          return displayProgressMessage('Error uploading file', 'danger');
+        }
+
         return response.json();
       })
       .then(function(json) {
         var fileReader = new FileReader();
         fileReader.addEventListener('loadend', function() {
-          fetch(json.uploadURL, {
-            method: 'PUT',
-            body: new Blob([fileReader.result], { type: file.type })
-          })
+          var body = new Blob([fileReader.result], { type: file.type });
+          uploadFile(json.uploadURL, body)
           .then(function(response) {
             if (!response.ok) {
-              return document.getElementById('progress-message').innerHTML = "<p class='alert alert-danger'>Error uploading file</p>";
+              return displayProgressMessage('Error uploading file', 'danger');
             }
           })
           .catch(function (e) {
@@ -104,30 +121,24 @@
       })
       .then(function() {
         var name = `${file.name.substr(0, file.name.lastIndexOf('.'))}.json`;
-        fetch(`${apiBaseUrl}/requestUploadURL`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: name,
-            type: 'application/json'
-          })
-        })
+        requestUploadURL(name, 'application/json')
         .then(function (response) {
+          if (!response.ok) {
+            return displayProgressMessage('Error uploading file', 'danger');
+          }
+
           return response.json();
         })
         .then(function (json) {
-          fetch(json.uploadURL, {
-            method: 'PUT',
-            body: new Blob([JSON.stringify({ 'category': select.value })], { type: 'application/json' })
-          })
+          var category = select.value;
+          var body = new Blob([JSON.stringify({ category })], { type: 'application/json' });
+          uploadFile(json.uploadURL, body)
           .then(function (response) {
             if (!response.ok) {
-              return document.getElementById('progress-message').innerHTML = "<p class='alert alert-danger'>Error uploading json file</p>";
+              return displayProgressMessage('Error uploading json file', 'danger');
             }
 
-            document.getElementById('progress-message').innerHTML = "<p class='alert alert-success'>File successfully uploaded!</p>";
+            displayProgressMessage('File successfully uploaded!', 'success');
           });
         })
         .catch(function (e) {
