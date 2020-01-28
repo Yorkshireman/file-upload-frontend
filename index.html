@@ -6,26 +6,36 @@
     <title>File Uploader</title>
     <link href='https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh' crossorigin='anonymous'>
   </head>
-  <body class='container'>
+  <body class='container' style="max-width: 427px;">
+    <div>
+      <h1>File uploader</h1>
+    </div>
     <form method='post' enctype='multipart/form-data'>
       <div>
-        <label for='file-input'>Choose file to upload (max 5MB):</label>
+        <label class='font-weight-bold' for='file-input'>Choose a file to upload (max 5MB)</label>
         <input name='file-input' multiple='false' type='file'>
       </div>
-      <div>
-        <label for='category-select'>Choose a category:</label>
-        <select name='categories' id='category-select' required>
-          <option value=''>--Please choose a category--</option>
+      <div class='mt-2 mb-2 input-group'>
+        <label class='input-group-text' for='category-select'>Choose a category:</label>
+        <select class='custom-select' name='categories' id='category-select' required>
+          <option value=''></option>
           <option value='systemA'>systemA</option>
           <option value='systemB'>systemB</option>
           <option value='systemC'>systemC</option>
         </select>
       </div>
-      <div class='file-validation-message'>
-        <p>No files currently selected for upload</p>
+      <div class='file-validation-message'></div>
+      <div>
+        <h4>Terms and Conditions</h4>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna
+          aliqua. Aliquet bibendum enim facilisis gravida neque convallis a.
+        </p>
+        <input type='checkbox' id='terms-checkbox' name='terms-understood'>
+        <label for='terms-checkbox'>I understand and accept the Terms & Conditions</label>
       </div>
       <div>
-        <button class='mt-1' disabled>Submit</button>
+        <button class='btn btn-primary mb-2' disabled>Submit</button>
       </div>
       <div id='progress-message'></div>
     </form>
@@ -37,23 +47,29 @@
     var form = document.querySelector('form');
     var input = document.querySelector('input');
     var select = document.querySelector('select');
+    var termsCheckbox = document.getElementById('terms-checkbox');
 
-    function checkFile() {
-      if (input.files[0].size > 5000000) {
-        return fileValidationMessage.innerHTML = `<p>File size of ${input.files[0].size} bytes exceeds 5MB limit</p>`;
+    input.addEventListener('change', validateFormSelections);
+    select.addEventListener('change', validateFormSelections);
+    termsCheckbox.addEventListener('change', validateFormSelections);
+    form.onsubmit = handleSubmit;
+
+    function validateFormSelections() {
+      if (input.files[0] && input.files[0].size > 5000000) {
+        return fileValidationMessage.innerHTML =
+          `<p class='alert alert-danger'>File size of ${input.files[0].size} bytes exceeds 5MB limit</p>`;
       }
 
       fileValidationMessage.innerHTML = '';
-      button.removeAttribute('disabled');
+      input.files[0] && select.value && termsCheckbox.checked
+        ? button.removeAttribute('disabled')
+        : button.setAttribute('disabled', true);
     }
-
-    input.addEventListener('change', checkFile);
-    form.onsubmit = handleSubmit;
 
     function handleSubmit(e) {
       e.preventDefault();
       var file = input.files[0];
-      document.getElementById('progress-message').innerHTML = '<p>Uploading...</p>';
+      document.getElementById('progress-message').innerHTML = "<p class='alert alert-info'>Uploading...</p>";
       fetch(`${apiBaseUrl}/requestUploadURL`, {
         method: 'POST',
         headers: {
@@ -76,8 +92,11 @@
           })
           .then(function(response) {
             if (!response.ok) {
-              return document.getElementById('progress-message').innerHTML = '<p>Error uploading file</p>';
+              return document.getElementById('progress-message').innerHTML = "<p class='alert alert-danger'>Error uploading file</p>";
             }
+          })
+          .catch(function (e) {
+            console.log(e);
           });
         });
 
@@ -105,12 +124,18 @@
           })
           .then(function (response) {
             if (!response.ok) {
-              return document.getElementById('progress-message').innerHTML = '<p>Error uploading json file</p>';
+              return document.getElementById('progress-message').innerHTML = "<p class='alert alert-danger'>Error uploading json file</p>";
             }
 
-            document.getElementById('progress-message').innerHTML = '<p>File successfully uploaded!</p>';
+            document.getElementById('progress-message').innerHTML = "<p class='alert alert-success'>File successfully uploaded!</p>";
           });
+        })
+        .catch(function (e) {
+          console.log(e);
         });
+      })
+      .catch(function (e) {
+        console.log(e);
       });
     };
   </script>
