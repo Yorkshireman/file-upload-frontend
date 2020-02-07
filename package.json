@@ -1,0 +1,21 @@
+{
+  "name": "file-upload-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "webpack --mode=production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yorkshireman/file-upload-frontend.git"
+  },
+  "author": "Andrew Stelmach",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yorkshireman/file-upload-frontend/issues"
+  },
+  "devDependencies": {
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10"
+  }
+}
