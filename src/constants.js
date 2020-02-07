@@ -1,0 +1,3 @@
+const FILE_SIZE_LIMIT = 5000000;
+
+export { FILE_SIZE_LIMIT };

@@ -1,3 +1,4 @@
+import { FILE_SIZE_LIMIT } from './constants';
 import { requestUploadURL, uploadFile } from './services';
 
 const button = document.querySelector('button');
@@ -7,20 +8,15 @@ const input = document.querySelector('input');
 const select = document.querySelector('select');
 const termsCheckbox = document.getElementById('terms-checkbox');
 
-input.addEventListener('change', validateFormSelections);
-select.addEventListener('change', validateFormSelections);
-termsCheckbox.addEventListener('change', validateFormSelections);
-form.onsubmit = handleSubmit;
-
 const displayProgressMessage = (text, type) => {
   return document.getElementById('progress-message').innerHTML = `
     <p class='alert alert-${type}'>${text}</p>
   `;
 };
 
-function validateFormSelections() {
+const validateFormSelections = () => {
   document.getElementById('progress-message').innerHTML = '';
-  if (input.files[0] && input.files[0].size > 5000000) {
+  if (input.files[0] && input.files[0].size > FILE_SIZE_LIMIT) {
     return fileValidationMessage.innerHTML = `
       <p class='alert alert-danger'>
         File size of ${input.files[0].size} bytes exceeds 5MB limit
@@ -32,9 +28,13 @@ function validateFormSelections() {
   input.files[0] && select.value && termsCheckbox.checked
     ? button.removeAttribute('disabled')
     : button.setAttribute('disabled', true);
-}
+};
 
-function handleSubmit(e) {
+input.addEventListener('change', validateFormSelections);
+select.addEventListener('change', validateFormSelections);
+termsCheckbox.addEventListener('change', validateFormSelections);
+
+form.onsubmit = e => {
   e.preventDefault();
   const file = input.files[0];
 
@@ -88,4 +88,4 @@ function handleSubmit(e) {
         .catch(e => console.log(e));
     })
     .catch(e => console.log(e));
-}
+};
